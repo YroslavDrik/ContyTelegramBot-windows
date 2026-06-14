@@ -11,7 +11,7 @@ def get_create_config():
     ]
     }
 
-    answer_dist = {
+    answer_dict = {
         'greeting': "Hello {name}! I'm Conty, your PC assistant",
         'screenshot': "Here's your screenshot:",
         'ask_volume_action': "What volume level would you like?",
@@ -41,8 +41,13 @@ def get_create_config():
 
     }
 
+    joke_dict = [
+        "What’s red and bad for your teeth?\nA brick",
+        "How many therapists does it take to change a lightbulb?\nOnly one, but the lightbulb has to want to change",
+    ]
+
     with open("config.json", "w", encoding="utf-8") as file:
-        json.dump([settings  , answer_dist], file, ensure_ascii=False, indent=4)
+        json.dump([settings  , answer_dict , joke_dict], file, ensure_ascii=False, indent=4)
 
     print("Settings saved to config.json")
     return None

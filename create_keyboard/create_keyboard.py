@@ -7,10 +7,12 @@ def get_keyboard_main():
             [KeyboardButton(text="🖼 Take Screenshot")] ,
             [KeyboardButton(text="🔊 Change Volume")],
             [KeyboardButton(text="🌙 Sleep Mode")],
-            [KeyboardButton(text="❌ ALT + F4")],
+            [KeyboardButton(text="😃 Tell a Joke")],
             [KeyboardButton(text="⏱ Set Timer for Shutdown")],
             [KeyboardButton(text="🔌 Shut Down")],
             [KeyboardButton(text="🖥️ Get System Data")],
+            [KeyboardButton(text="❌ ALT + F4")],
+
         ],
         resize_keyboard=True)
     return keyboard_main

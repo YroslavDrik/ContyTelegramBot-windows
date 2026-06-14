@@ -1,5 +1,4 @@
 import asyncio
-
 import pyautogui
 from aiogram.filters import CommandStart, BaseFilter
 from aiogram.types import Message
@@ -27,7 +26,8 @@ except FileNotFoundError:
         config_data = json.load(file)
 
 settings = config_data[0]
-answer_dist = config_data[1]
+answer_dict = config_data[1]
+joke_dict = config_data[2]
 
 TOKEN = settings["TOKEN"]
 SAVE_DIR = settings["SAVE_DIR"]
@@ -69,7 +69,7 @@ class AllowedUsersFilter(BaseFilter):
 async def command_start_handler(message: types.Message) -> None:
     name = message.from_user.full_name
     await message.answer_sticker(list_stickers[0][1])
-    await message.answer(answer_dist['greeting'].format(name=name), reply_markup=keyboard_main)
+    await message.answer(answer_dict['greeting'].format(name=name), reply_markup=keyboard_main)
 
 
 @dp.message(AllowedUsersFilter(), F.document | F.photo | F.video | F.audio | F.voice)
@@ -84,6 +84,7 @@ async def handle_any_file(message: types.Message):
         filename = f"{message.from_user.id}_{message.message_id}.jpg"
         file_size = message.photo[-1].file_size
         subdir = "Pictures"
+
     elif message.document:
         file_id = message.document.file_id
         filename = message.document.file_name
@@ -97,16 +98,19 @@ async def handle_any_file(message: types.Message):
             subdir = "Music"
         else:
             subdir = "Documents"
+
     elif message.video:
         file_id = message.video.file_id
         filename = f"{message.from_user.id}_{message.message_id}.mp4"
         file_size = message.video.file_size
         subdir = "Videos"
+
     elif message.audio:
         file_id = message.audio.file_id
         filename = f"{message.from_user.id}_{message.message_id}.mp3"
         file_size = message.audio.file_size
         subdir = "Music"
+
     elif message.voice:
         file_id = message.voice.file_id
         filename = f"{message.from_user.id}_{message.message_id}.ogg"
@@ -114,7 +118,7 @@ async def handle_any_file(message: types.Message):
         subdir = "Voice"
 
     if file_size and file_size > MAX_FILE_SIZE:
-        await message.reply(answer_dist["error_max_size"])
+        await message.reply(answer_dict["error_max_size"])
         return
 
     if file_id and filename:
@@ -124,24 +128,32 @@ async def handle_any_file(message: types.Message):
         os.makedirs(save_path, exist_ok=True)
         destination = os.path.join(save_path, filename)
         await bot.download_file(file_path, destination)
-        await message.reply(answer_dist['file_saved'].format(filename=filename))
+        await message.reply(answer_dict['file_saved'].format(filename=filename))
 
 @dp.message(AllowedUsersFilter())
 async def handle_buttons(message: types.Message):
+    #If the text is equal to the text from the button, execute the command
+
     if message.text == "🖼 Take Screenshot":
         screenshot = pyautogui.screenshot()
         screenshot_path = "images/screenshot.png"
         screenshot.save(screenshot_path)
-        await message.answer_photo(photo=types.FSInputFile(screenshot_path), caption=answer_dist["screenshot"])
+        await message.answer_photo(photo=types.FSInputFile(screenshot_path), caption=answer_dict["screenshot"])
+
+    elif message.text == "😃 Tell a Joke":
+        index_joke = random.randrange(0 , len(joke_dict))
+        await message.answer(joke_dict[index_joke])
+
     elif message.text == "❌ ALT + F4":
         keyboard.press_and_release("Alt+F4")
-        await message.answer(answer_dist["close_program"])
+        await message.answer(answer_dict["close_program"])
+
     elif message.text == "🔌 Shut Down":
-        await message.answer(answer_dist["shutdown_pc"])
+        await message.answer(answer_dict["shutdown_pc"])
         os.system("shutdown /s /t 0")
 
     elif message.text == "⏱ Set Timer for Shutdown":
-        await message.answer(answer_dist["ask_custom_volume"], reply_markup=keyboard_ask_shutdown_timer)
+        await message.answer(answer_dict["ask_custom_volume"], reply_markup=keyboard_ask_shutdown_timer)
 
     elif message.text == "🖥️ Get System Data":
         (system_name, used_ram, total_ram, cpu_usage, disk_usage) = data_system.get_system_data()
@@ -149,11 +161,12 @@ async def handle_buttons(message: types.Message):
         disk_str = ""
         for disk in disk_usage:
             disk_str += f"Disk name: {disk[3][:-1]} {disk[1]} / {disk[2]} GB\n"
-        await message.answer(answer_dist["get_system_data"].format(system_name = system_name, used_ram = used_ram , total_ram = total_ram , cpu_usage = cpu_usage , ) + disk_str)
+        await message.answer(answer_dict["get_system_data"].format(system_name = system_name, used_ram = used_ram, total_ram = total_ram, cpu_usage = cpu_usage, ) + disk_str)
 
     elif message.text == "🌙 Sleep Mode":
-        await message.answer(answer_dist["sleep_mode"], reply_markup=keyboard_main)
+        await message.answer(answer_dict["sleep_mode"], reply_markup=keyboard_main)
         ctypes.windll.powrprof.SetSuspendState(0, 1, 0)
+
     elif message.text in list_timers:
         text = message.text
         numbers = int(re.sub(r'\D', '', text))
@@ -163,17 +176,18 @@ async def handle_buttons(message: types.Message):
         else:
             delay = numbers * 3600
             os.system(f"shutdown /s /t {delay}")
-        await message.answer(answer_dist["set_timer"] + str(message.text), reply_markup=keyboard_main)
+        await message.answer(answer_dict["set_timer"] + str(message.text), reply_markup=keyboard_main)
 
     elif message.text == "⏱ Cancel Shutdown Timer":
         os.system("shutdown -a")
-        await message.answer(answer_dist['okay_doing'], reply_markup=keyboard_main)
+        await message.answer(answer_dict['okay_doing'], reply_markup=keyboard_main)
 
     elif message.text == "⏯️ Playback Control":
-        await message.answer(answer_dist["ask_would_you_like"], reply_markup=keyboard_playback_control)
+        await message.answer(answer_dict["ask_would_you_like"], reply_markup=keyboard_playback_control)
 
     elif message.text == "▶️":
         keyboard.press_and_release('play/pause media')
+
     elif message.text == "⏭️":
         keyboard.press_and_release('next track')
 
@@ -181,27 +195,27 @@ async def handle_buttons(message: types.Message):
         keyboard.press_and_release('previous track')
 
     elif message.text == "🔊Change Volume":
-        await message.answer(answer_dist["ask_custom_volume"], reply_markup=keyboard_change_volume)
+        await message.answer(answer_dict["ask_custom_volume"], reply_markup=keyboard_change_volume)
 
     elif message.text == "↩️ Back to Home":
-        await message.answer(answer_dist['back_home_menu'], reply_markup=keyboard_main)
+        await message.answer(answer_dict['back_home_menu'], reply_markup=keyboard_main)
 
     elif message.text == "🔉 Set Custom Volume":
-        await message.answer(answer_dist["ask_custom_volume"], reply_markup=keyboard_change_volume_custom)
+        await message.answer(answer_dict["ask_custom_volume"], reply_markup=keyboard_change_volume_custom)
 
     elif message.text == "🔊 Set Max Volume":
         devices = AudioUtilities.GetSpeakers()
         interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
         volume = cast(interface, POINTER(IAudioEndpointVolume))
         volume.SetMasterVolumeLevelScalar(1, None)
-        await message.answer(answer_dist["volume_updated"], reply_markup=keyboard_main)
+        await message.answer(answer_dict["volume_updated"], reply_markup=keyboard_main)
 
     elif message.text == "🔈 Set Mute":
         devices = AudioUtilities.GetSpeakers()
         interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
         volume = cast(interface, POINTER(IAudioEndpointVolume))
         volume.SetMasterVolumeLevelScalar(0, None)
-        await message.answer(answer_dist["volume_updated"], reply_markup=keyboard_main)
+        await message.answer(answer_dict["volume_updated"], reply_markup=keyboard_main)
 
     elif message.text in list_volume:
         devices = AudioUtilities.GetSpeakers()
@@ -209,20 +223,19 @@ async def handle_buttons(message: types.Message):
         volume = cast(interface, POINTER(IAudioEndpointVolume))
         volumeInt = int(message.text.split()[1][:-1]) / 100
         volume.SetMasterVolumeLevelScalar(volumeInt, None)
-        await message.answer(answer_dist["volume_updated"], reply_markup=keyboard_main)
+        await message.answer(answer_dict["volume_updated"], reply_markup=keyboard_main)
 
     else:
         result = random.choice([True, False])
         if result:
             await message.answer_sticker(list_stickers[1][1])
         else:
-            await message.answer(answer_dist["unknown"])
-
+            await message.answer(answer_dict["unknown"])
 
 @dp.message()
 async def handle_not_allowed(message: types.Message):
     if message.from_user.id not in ALLOWED_USER_IDS:
-        await message.answer(answer_dist["no_access"])
+        await message.answer(answer_dict["no_access"])
 
 
 async def main() -> None:
