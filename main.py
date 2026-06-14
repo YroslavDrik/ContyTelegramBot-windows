@@ -194,7 +194,7 @@ async def handle_buttons(message: types.Message):
     elif message.text == "⏮️":
         keyboard.press_and_release('previous track')
 
-    elif message.text == "🔊Change Volume":
+    elif message.text == "🔊 Change Volume":
         await message.answer(answer_dict["ask_custom_volume"], reply_markup=keyboard_change_volume)
 
     elif message.text == "↩️ Back to Home":
